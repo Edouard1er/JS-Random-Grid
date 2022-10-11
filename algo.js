@@ -1,13 +1,25 @@
-function createGrid(grid_size=6) {
+function createBody(){
     document.body.innerHTML=`<div id='tirage'>
-            <div id='intro'>
-                <h1>Bienvenue sur l\'interface de tirage</h1>
-                <input type="input" placeholder="Grid Size" name="grid_size" id='grid_size' value='${grid_size}' required />
-                <button id='launch-button'>Lancer</button>
-            </div>
-            <div id="my_grid"></div>
-            <div id="info"></div>
-        </div>`
+        <div id='intro'>
+            <h1>Bienvenue sur l\'interface de tirage</h1>
+            <input type="input" placeholder="Grid Size" name="grid_size" id='grid_size' value='4' required />
+            <button id='launch-button'>Lancer</button>
+        </div>
+        <div id="my_grid"></div>
+        <div id="info"></div>
+    </div>`
+    document.getElementById("launch-button").addEventListener("click", function() {
+        let grid_size = document.getElementById("grid_size").value
+        if(parseInt(grid_size) && ((parseInt(grid_size) >= 4) && (parseInt(grid_size) <= 25))){
+            createGrid(grid_size)
+        }else{
+            alert("Veuillez choisir une taille entre 4 et 25 ")
+        }
+    });
+}
+
+function createGrid(grid_size=6) {
+    document.getElementById("grid_size").value=grid_size
     let grid = document.getElementById("my_grid")
     grid.innerHTML=`<table align='center' id='grid_table'><tbody id='grid_body'></tbody></table>`
     let grid_body_html_code=``
@@ -132,9 +144,5 @@ function canBeNeighbor(row=0, column=0, all_places=[], block_place=[]) {
         return false
     }
 }
-
+createBody()
 createGrid(4)
-document.getElementById("launch-button").addEventListener("click", function() {
-    let grid_size = document.getElementById("grid_size").value
-    createGrid(grid_size)
-});
