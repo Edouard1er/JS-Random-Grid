@@ -1,7 +1,15 @@
 function createGrid(grid_size=6) {
-    document.body.innerHTML=`<div id="my_grid"></div><div id="info"></div>`
+    document.body.innerHTML=`<div id='tirage'>
+            <div id='intro'>
+                <h1>Bienvenue sur l\'interface de tirage</h1>
+                <input type="input" placeholder="Grid Size" name="grid_size" id='grid_size' value='${grid_size}' required />
+                <button id='launch-button'>Lancer</button>
+            </div>
+            <div id="my_grid"></div>
+            <div id="info"></div>
+        </div>`
     let grid = document.getElementById("my_grid")
-    grid.innerHTML=`<table id='grid_table'><tbody id='grid_body'></tbody></table>`
+    grid.innerHTML=`<table align='center' id='grid_table'><tbody id='grid_body'></tbody></table>`
     let grid_body_html_code=``
     for (let row = 0; row < grid_size; row++) {
         grid_body_html_code += `<tr id='${row}'>`
@@ -14,17 +22,21 @@ function createGrid(grid_size=6) {
     populateRandomData(grid_size)
 }
 
-function constructData(grid_size,amount_data,isBlock=false) {
+function constructData(grid_size,amount_data,block_place=[],isBlock=false) {
     let chosen_place=[]
     for (let each_data = 0; each_data < amount_data; each_data++) {
         var row, column=0
         var proposition={}
-        var block_place_part=[]
+        var isInBlockPart=false
         do {
             row =Math.floor(Math.random() * grid_size)
             column =Math.floor(Math.random() * grid_size)
             proposition={"row":row, "column":column}
-        }while(validationPlace(chosen_place,proposition,block_place_part))
+            if(block_place.filter(each_block=>each_block.row==row && each_block.column==column).length > 0)
+                isInBlockPart=true
+            else
+                isInBlockPart=false
+        }while(isInBlockPart || validationPlace(chosen_place,proposition))
         chosen_place.push(proposition)
         if(isBlock)
             document.getElementById(row+"_"+column).style.backgroundColor="green"
@@ -36,12 +48,16 @@ function constructData(grid_size,amount_data,isBlock=false) {
 
 function populateRandomData(grid_size=6) {
     let amount_data = grid_size - 1
-    // let block_place=constructData(grid_size,parseInt(grid_size/2),[], true)
-    let chosen_place=constructData(grid_size,amount_data)
-    let amount_neighbor=populateNeighbor(chosen_place,grid_size)
-    document.getElementById("info").innerText="Le format de la grille est :"+grid_size+"x"+grid_size+ 
-    "\nLe nombre d'objet est: "+amount_data+
-    "\nLe nombre de voisin est: "+amount_neighbor 
+    let amount_block = parseInt(grid_size/2)
+    let block_place=constructData(grid_size,amount_block,[], true)
+    let chosen_place=constructData(grid_size,amount_data,block_place)
+    let amount_neighbor=populateNeighbor(chosen_place,block_place,grid_size)
+    document.getElementById("info").innerText="Le format de la grille est : "+grid_size+"x"+grid_size+ 
+    "\nLe nombre d'objet est (en BLEU) : "+amount_data+
+    "\nLe nombre de voisin est (en ROUGE) : "+amount_neighbor +
+    "\nLe nombre de block (en VERT) : " +amount_block +
+    ((amount_data == amount_neighbor)?"\nC'est tirage dans lequel tous les objets trouvent chacun un voisin.":
+    "\nDans ce tirage, tous les objets n'ont pas reussi a se trouver un voisin.")
 }
 
 function validationPlace(chosen_place=[], proposition) {
@@ -68,7 +84,7 @@ function validationPlace(chosen_place=[], proposition) {
     }
 }
 
-function populateNeighbor(chosen_place=[], grid_size=6) {
+function populateNeighbor(chosen_place=[],block_place=[], grid_size=6) {
     let all_neighbors=0
     let all_places=chosen_place
     chosen_place.forEach(current_place=>{
@@ -81,7 +97,7 @@ function populateNeighbor(chosen_place=[], grid_size=6) {
         let allReadyFind=false
         all_propositions.forEach(each_proposition => {
             if(each_proposition.row >=0 && each_proposition.column >=0 && each_proposition.row < grid_size && each_proposition.column < grid_size){
-                if(!allReadyFind && canBeNeighbor(each_proposition.row, each_proposition.column, all_places)){
+                if(!allReadyFind && canBeNeighbor(each_proposition.row, each_proposition.column, all_places,block_place)){
                     document.getElementById(each_proposition.row+"_"+each_proposition.column).style.backgroundColor="red"
                     all_places.push({row:each_proposition.row, column:each_proposition.column})
                     allReadyFind=true
@@ -93,7 +109,10 @@ function populateNeighbor(chosen_place=[], grid_size=6) {
     return all_neighbors
 }
 
-function canBeNeighbor(row=0, column=0, all_places=[]) {
+function canBeNeighbor(row=0, column=0, all_places=[], block_place=[]) {
+    if(block_place.filter(each_block=>each_block.row==row && each_block.column==column).length > 0){
+        return false
+    }
     neighbors=all_places.filter(other_place=>
         (
             other_place.row == row
@@ -115,3 +134,7 @@ function canBeNeighbor(row=0, column=0, all_places=[]) {
 }
 
 createGrid(4)
+document.getElementById("launch-button").addEventListener("click", function() {
+    let grid_size = document.getElementById("grid_size").value
+    createGrid(grid_size)
+});
